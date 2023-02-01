@@ -1,0 +1,80 @@
+_schema-version: "3.2"
+ID: GuardianApp
+version: 0.0.1
+modules:
+- name: GuardianApp-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: GuardianApp-destination-service
+    parameters:
+      content-target: true
+  - name: GuardianApp_html_repo_host
+    parameters:
+      service-key:
+        name: GuardianApp_html_repo_host-key
+  - name: uaa_GuardianApp
+    parameters:
+      service-key:
+        name: uaa_GuardianApp-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: GuardianApp_GuardianApp_html_repo_host
+          ServiceInstanceName: GuardianApp-html5-app-host-service
+          ServiceKeyName: GuardianApp_html_repo_host-key
+          sap.cloud.service: GuardianApp
+        - Authentication: OAuth2UserTokenExchange
+          Name: GuardianApp_uaa_GuardianApp
+          ServiceInstanceName: GuardianApp-xsuaa-service
+          ServiceKeyName: uaa_GuardianApp-key
+          sap.cloud.service: GuardianApp
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: GuardianApp_ui_deployer
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: GuardianApp_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - GuardianAPP-content.zip
+      name: GuardianAPP
+      target-path: resources/
+- name: GuardianAPP
+  type: html5
+  path: GuardianAPP
+  build-parameters:
+    builder: custom
+    commands:
+    - npm install
+    - npm run build
+    supported-platforms: []
+resources:
+- name: GuardianApp-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      version: 1.0.0
+    service: destination
+    service-name: GuardianApp-destination-service
+    service-plan: lite
+- name: GuardianApp_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: GuardianApp-html5-app-host-service
+    service-plan: app-host
+- name: uaa_GuardianApp
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: GuardianApp-xsuaa-service
+    service-plan: application
